@@ -1,55 +1,47 @@
 import Decimal from "decimal.js";
-import {
-  dataSet,
-  DataSetTypeX,
-  DataSetTypeY,
-  DataSet,
-  Matrix,
-  yVector,
-  xMatrix,
-  thetas,
-} from "../data/data";
-
+import { Matrix } from "../data/data";
 export const fixed3 = (n: number | Decimal) =>
   new Decimal(new Decimal(n).toFixed(4)).toNumber();
 
 export const hypothesis = (
-  thetaItems: number[],
+  thetaItems: Matrix,
   xMatrixItems: number[]
 ): number => {
   let result = 0;
   for (let i = 0; i < thetaItems.length; i++) {
     result = Decimal.add(
       result,
-      Decimal.mul(thetaItems[i], xMatrixItems[i])
+      Decimal.mul(thetaItems[i][0], xMatrixItems[i])
     ).toNumber();
   }
-  return fixed3(result);
+  return result;
 };
 
-const cost = (yVector: Matrix, xMatrix: Matrix, thetas: number[]) => {
-  return J(yVector, xMatrix, thetas) / 2 / length;
-};
+// const cost = (yVector: Matrix, xMatrix: Matrix, thetas: number[]) => {
+//   return J(yVector, xMatrix, thetas) / 2 / length;
+// };
 
-const J = (yVector: Matrix, xMatrix: Matrix, thetas: number[]) => {
-  const length = yVector.length;
-  let value = 0;
-  for (let i = 0; i < length; i++) {
-    const difference = Decimal.sub(
-      hypothesis(thetas, xMatrix[i]),
-      yVector[i][0]
-    ).toNumber();
+// 代价函数
+// const J = (yVector: Matrix, xMatrix: Matrix, thetas: number[]) => {
+//   const length = yVector.length;
+//   let value = 0;
+//   for (let i = 0; i < length; i++) {
+//     const difference = Decimal.sub(
+//       hypothesis(thetas, xMatrix[i]),
+//       yVector[i][0]
+//     ).toNumber();
 
-    value = Decimal.add(value, Decimal.pow(difference, 2)).toNumber();
-  }
+//     value = Decimal.add(value, Decimal.pow(difference, 2)).toNumber();
+//   }
 
-  return fixed3(value);
-};
+//   return fixed3(value);
+// };
 
+// 求出每个theta的偏导数
 const calculateFn = (
   yVector: Matrix,
   xMatrix: Matrix,
-  thetas: number[],
+  thetas: Matrix,
   index: number
 ) => {
   const length = yVector.length;
@@ -66,22 +58,25 @@ const calculateFn = (
     ).toNumber();
   }
 
-  return fixed3(Decimal.div(value, length).toNumber());
+  return Decimal.div(value, length).toNumber();
 };
 
-export const debuggerParams = (
+let isFinished = false
+
+export const startIterate = (
   yVector: Matrix,
   xMatrix: Matrix,
-  thetas: number[],
+  thetas: Matrix,
   rate: number,
   process?: (obj: {
     derivatives: number[];
-    localThetas: number[];
+    localThetas: Matrix;
     timestamp: number;
   }) => void
 ) =>
-  new Promise<number[]>((resolve) => {
-    let localThetas = [...thetas];
+  new Promise<Matrix>((resolve, reject) => {
+    isFinished = false
+    let localThetas = thetas.map((item) => [...item]);
     let count = 0;
     const derivatives = Array.from({ length: thetas.length }, () => 1);
     const length = yVector.length;
@@ -93,16 +88,16 @@ export const debuggerParams = (
           nextThetas[i] = localThetas[i];
         } else {
           derivatives[i] = calculateFn(yVector, xMatrix, localThetas, i);
-          nextThetas[i] = Decimal.sub(
-            localThetas[i],
+          nextThetas[i] = [Decimal.sub(
+            localThetas[i][0],
             Decimal.div(Decimal.mul(rate, derivatives[i]), length)
-          ).toNumber();
+          ).toNumber()];
           if (derivatives[i] === 0) {
             count++;
           }
         }
       }
-      localThetas = [...nextThetas];
+      localThetas = nextThetas;
       if (process) {
         process({
           derivatives,
@@ -111,14 +106,18 @@ export const debuggerParams = (
         });
       }
       if (count === localThetas.length) {
+        isFinished = true
         resolve(localThetas);
         return;
       }
-      requestAnimationFrame(action);
-      // console.log(derivatives);
+      !isFinished ? requestAnimationFrame(action) : reject('终止迭代');
     };
     action();
   });
+
+export const stopIterate = () => {
+  isFinished = true
+}
 
 // console.log(yVector, xMatrix, thetas, .01)
 

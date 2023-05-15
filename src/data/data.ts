@@ -74,7 +74,7 @@ const formatData = (data: DataSet) => {
     xMatrix.push(xItem);
     yVector.push(yItem);
   }
-  const thetas: number[] = Array.from({ length: xMatrix[0].length }, () => 1);
+  const thetas: Matrix = Array.from({ length: xMatrix[0].length }, () => [1]);
   return [yVector, xMatrix, thetas];
 };
 
