@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, Ref, watch } from "vue";
 import * as echarts from "echarts";
 import { yVector, xMatrix, thetas, Matrix } from "../data/data";
-import { startIterate, fixed3, hypothesis, stopIterate } from "../algorithm/hypothesis";
+import { startIterate, hypothesis, stopIterate } from "../algorithm/hypothesis";
 
 let myChart: echarts.ECharts;
 
@@ -23,7 +23,7 @@ startIterate(
   yVector as Matrix,
   xMatrix as Matrix,
   thetas as Matrix,
-  0.002268,
+  0.002282,
   (e: any) => {
     derivatives.value = e.derivatives;
     localThetas.value = e.localThetas;
@@ -31,9 +31,7 @@ startIterate(
     count.value += 1;
   }
 ).then((finalThetas: any) => {
-  const formatter = `y = ${fixed3(finalThetas[1][0])} * x + ${fixed3(
-    finalThetas[0][0]
-  )}`;
+  const formatter = `y = ${finalThetas[1][0]} * x + ${finalThetas[0][0]}`;
   const start = [0, hypothesis(finalThetas, [1, 0])];
   const end = [240, hypothesis(finalThetas, [1, 240])];
   markLineOpt.value = {
@@ -113,7 +111,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  stopIterate()
+  stopIterate();
   window.removeEventListener("resize", myChart.resize);
 });
 </script>

@@ -1,7 +1,7 @@
 import Decimal from "decimal.js";
 import { Matrix } from "../data/data";
-export const fixed3 = (n: number | Decimal) =>
-  new Decimal(new Decimal(n).toFixed(4)).toNumber();
+export const fixed = (n: number | Decimal, num: number) =>
+  new Decimal(new Decimal(n).toFixed(num)).toNumber();
 
 export const hypothesis = (
   thetaItems: Matrix,
@@ -84,7 +84,8 @@ export const startIterate = (
     const action = () => {
       const nextThetas = [];
       for (let i = 0; i < thetas.length; i++) {
-        if (derivatives[i] === 0) {
+        if (fixed(derivatives[i], 8) === 0) {
+          derivatives[i] = 0
           nextThetas[i] = localThetas[i];
         } else {
           derivatives[i] = calculateFn(yVector, xMatrix, localThetas, i);
